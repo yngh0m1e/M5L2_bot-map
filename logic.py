@@ -25,8 +25,9 @@ class DB_Map():
         with conn:
             cursor = conn.cursor()
             cursor.execute("SELECT id FROM cities WHERE city=?", (city_name,))
-            city_id = cursor.fetchone()[0]  
-            if city_id:
+            city_data = cursor.fetchone()
+            if city_data:
+                city_id = city_data[0]  
                 conn.execute('INSERT INTO users_cities VALUES (?, ?)', (user_id, city_id))
                 conn.commit()
                 return 1
@@ -40,11 +41,11 @@ class DB_Map():
             cursor = conn.cursor()
             cursor.execute('''SELECT cities.city 
                             FROM users_cities  
-                            JOIN countries ON users_cities.city_id = cities.cid 
+                            JOIN cities ON users_cities.city_id = cities.id
                             WHERE users_cities.user_id = ?''', (user_id,))
 
-            countries = [row[0] for row in cursor.fetchall()]
-            return countries
+            cities = [row[0] for row in cursor.fetchall()]
+            return cities
 
 
     def get_coordinates(self, city_name):
@@ -57,7 +58,7 @@ class DB_Map():
             coordinates = cursor.fetchone()
             return coordinates
 
-    def create_grapf(self, cities):
+    def create_grapf(self, path, cities):
         pass
         
     def draw_distance(self, city1, city2):

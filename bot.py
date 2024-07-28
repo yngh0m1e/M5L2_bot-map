@@ -19,7 +19,12 @@ def handle_help(message):
     bot.send_message(message.chat.id, "/show_city [город] - Показать город на карте.\n"
                                       "/remember_city [город] - Запомнить город.\n"
                                       "/show_my_cities - Показать все сохраненные города.\n"
-                                      "/set_marker_color - Установить цвет маркера.")
+                                      "/set_marker_color - Установить цвет маркера.\n"
+                                      "/show_cities_by_country [страна] - Показать города из страны.\n"
+                                      "/show_cities_by_population_density [плотность] - Показать города с плотностью населения.\n"
+                                      "/show_cities_by_country_and_density [страна] [плотность] - Показать города из страны с определенной плотностью населения.\n"
+                                      "/show_weather [город] - Показать погоду в городе.\n"
+                                      "/show_time [город] - Показать время в городе.")
 
 @bot.message_handler(commands=['set_marker_color'])
 def handle_set_marker_color(message):
@@ -81,6 +86,69 @@ def handle_show_visited_cities(message):
             bot.send_photo(message.chat.id, map)
     else:
         bot.send_message(message.chat.id, "У вас пока нет сохранённых городов.")
+
+@bot.message_handler(commands=['show_cities_by_country'])
+def handle_show_cities_by_country(message):
+    country_name = ' '.join(message.text.split()[1:])
+    cities = manager.get_cities_by_country(country_name)
+    if cities:
+        # Получаем цвет, выбранный пользователем, или используем цвет по умолчанию
+        color = user_colors.get(message.chat.id, 'blue')
+        manager.create_graph(f'{message.chat.id}_country_cities.png', cities, color=color)
+        with open(f'{message.chat.id}_country_cities.png', 'rb') as map:
+            bot.send_photo(message.chat.id, map)
+    else:
+        bot.send_message(message.chat.id, "В этой стране нет известных мне городов.")
+
+@bot.message_handler(commands=['show_cities_by_population_density'])
+def handle_show_cities_by_population_density(message):
+    try:
+        density = float(message.text.split()[-1])
+        cities = manager.get_cities_by_population_density(density)
+        if cities:
+            color = user_colors.get(message.chat.id, 'blue')
+            manager.create_graph(f'{message.chat.id}_density_cities.png', cities, color=color)
+            with open(f'{message.chat.id}_density_cities.png', 'rb') as map:
+                bot.send_photo(message.chat.id, map)
+        else:
+            bot.send_message(message.chat.id, "Нет городов с такой плотностью населения.")
+    except ValueError:
+        bot.send_message(message.chat.id, "Пожалуйста, введите корректное число для плотности.")
+
+@bot.message_handler(commands=['show_cities_by_country_and_density'])
+def handle_show_cities_by_country_and_density(message):
+    try:
+        parts = message.text.split()
+        country_name = parts[1]
+        density = float(parts[2])
+        cities = manager.get_cities_by_country_and_density(country_name, density)
+        if cities:
+            color = user_colors.get(message.chat.id, 'blue')
+            manager.create_graph(f'{message.chat.id}_country_density_cities.png', cities, color=color)
+            with open(f'{message.chat.id}_country_density_cities.png', 'rb') as map:
+                bot.send_photo(message.chat.id, map)
+        else:
+            bot.send_message(message.chat.id, "Нет городов с такими параметрами.")
+    except (ValueError, IndexError):
+        bot.send_message(message.chat.id, "Пожалуйста, введите команду в формате: /show_cities_by_country_and_density [страна] [плотность].")
+
+@bot.message_handler(commands=['show_weather'])
+def handle_show_weather(message):
+    city_name = message.text.split()[-1]
+    weather_info = manager.get_weather(city_name)
+    if weather_info:
+        bot.send_message(message.chat.id, f"Погода в {city_name}: {weather_info}")
+    else:
+        bot.send_message(message.chat.id, "Не удалось получить погоду для указанного города.")
+
+@bot.message_handler(commands=['show_time'])
+def handle_show_time(message):
+    city_name = message.text.split()[-1]
+    time_info = manager.get_time(city_name)
+    if time_info:
+        bot.send_message(message.chat.id, f"Текущее время в {city_name}: {time_info}")
+    else:
+        bot.send_message(message.chat.id, "Не удалось получить время для указанного города.")
 
 if __name__=="__main__":
     manager = DB_Map(DATABASE)

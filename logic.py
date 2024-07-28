@@ -59,8 +59,16 @@ class DB_Map():
             return coordinates
 
     def create_grapf(self, path, cities):
-        pass
-        
+        ax = plt.axes(projection=ccrs.PlateCarree())
+        ax.stock_img()
+        for city in cities:
+            coordinates = self.get_coordinates(city)
+            if coordinates:
+                lat, lng = coordinates
+                plt.plot([lng], [lat],color='blue', linewidth=2, marker='o',transform=ccrs.Geodetic(), )  
+                plt.text(lng + 3, lat + 12, city, horizontalalignment='left', transform=ccrs.Geodetic(), )
+            plt.savefig(path)
+            plt.close()
     def draw_distance(self, city1, city2):
         pass
 

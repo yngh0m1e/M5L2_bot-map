@@ -12,12 +12,16 @@ def handle_start(message):
 def handle_help(message):
     bot.send_message(message.chat.id, "Доступные команды:  ...")
     # Допиши команды бота
-
+    bot.send_message(message.chat.id, "Доступные команды: /show_city [город], /remember_city [город], /show_my_cities")
 
 @bot.message_handler(commands=['show_city'])
 def handle_show_city(message):
     city_name = message.text.split()[-1]
     # Реализуй отрисовку города по запросу
+    user_id = message.chat.id
+    manager.create_grapf(f'{user_id}.png', [city_name])
+    with open(f'{user_id}.png', 'rb') as map:
+        bot.send_photo(user_id, map)
 
 
 @bot.message_handler(commands=['remember_city'])
@@ -33,6 +37,13 @@ def handle_remember_city(message):
 def handle_show_visited_cities(message):
     cities = manager.select_cities(message.chat.id)
     # Реализуй отрисовку всех городов
+    cities = manager.select_cities(message.chat_id)
+    if cities:
+        manager.create_grapf(f'{message.chat.id}_create.png', cities)
+        with open(f'{message.chat.id}_cities.png', 'rb') as map:
+            bot.send_photo(message.chat.id, map)
+    else:
+        bot.send_message(message.chat.id, "У вас пока нет сохранённых городов.")
 
 
 if __name__=="__main__":
